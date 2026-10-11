@@ -16,7 +16,7 @@ class EdfTool < Formula
       exec "#{python}" -I -c 'import sys; sys.path.insert(0, "#{libexec}"); from edf_tool.cli import main; sys.exit(main())' "$@"
     SH
     chmod 0755, bin/"edf"
-    man1.install "src/edf_tool/data/edf.1"
+    man1.install_symlink libexec/"edf_tool/data/edf.1"
   end
 
   def caveats
