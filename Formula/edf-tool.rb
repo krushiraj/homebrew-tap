@@ -10,7 +10,7 @@ class EdfTool < Formula
   def install
     # Pure standard-library Python: no virtualenv or resources needed.
     libexec.install "src/edf_tool"
-    python = Formula["python@3.13"].opt_bin/"python3.13"
+    python = formula_opt_bin("python@3.13")/"python3.13"
     (bin/"edf").write <<~SH
       #!/bin/bash
       exec "#{python}" -I -c 'import sys; sys.path.insert(0, "#{libexec}"); from edf_tool.cli import main; sys.exit(main())' "$@"
