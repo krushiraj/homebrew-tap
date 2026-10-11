@@ -13,11 +13,14 @@ brew install krushiraj/tap/edf-tool
 
 Source: [krushiraj/edf-tool](https://github.com/krushiraj/edf-tool)
 
-After tagging a new edf-tool release, update the formula and push:
+New edf-tool releases are picked up automatically by the `bump-edf-tool` workflow
+(every 6 hours; it installs and tests the formula before pushing). To run it now:
 
 ```sh
-./bump.sh 0.1.1 && git commit -am "edf-tool 0.1.1" && git push
+gh workflow run bump-edf-tool -R krushiraj/homebrew-tap
 ```
+
+Or by hand: `./bump.sh 0.1.1 && git commit -am "edf-tool 0.1.1" && git push`
 
 ## babygo
 

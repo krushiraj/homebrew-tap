@@ -1,0 +1,64 @@
+name: bump-edf-tool
+
+# Points Formula/edf-tool.rb at the latest krushiraj/edf-tool GitHub release.
+# The formula is only pushed after it installs, passes `brew test` and `brew audit`.
+# Run by hand with: gh workflow run bump-edf-tool -R krushiraj/homebrew-tap
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to bump to, e.g. 0.1.1 (default: latest release)"
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bump-edf-tool
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WANT: ${{ inputs.version }}
+        run: |
+          latest="${WANT:-$(gh api repos/krushiraj/edf-tool/releases/latest --jq .tag_name)}"
+          latest="${latest#v}"
+          current=$(sed -nE 's|^  url ".*/v([^/]+)\.tar\.gz"|\1|p' Formula/edf-tool.rb)
+          echo "formula: $current, latest release: $latest"
+          if [ "$latest" != "$current" ]; then echo "version=$latest" >> "$GITHUB_OUTPUT"; fi
+
+  bump:
+    needs: check
+    if: needs.check.outputs.version != ''
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Update formula
+        run: |
+          ./bump.sh "$VERSION"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -qam "edf-tool $VERSION"
+      - name: Install, test and audit
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+        run: |
+          brew tap krushiraj/tap "$GITHUB_WORKSPACE"
+          brew install krushiraj/tap/edf-tool
+          brew test krushiraj/tap/edf-tool
+          brew audit krushiraj/tap/edf-tool
+          edf --version | grep -q "$VERSION"
+      - run: git push origin HEAD:main
